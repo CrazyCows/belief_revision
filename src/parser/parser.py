@@ -14,9 +14,9 @@
 
 from sympy import sympify
 from sympy.logic.boolalg import to_cnf
-from src.dto.models import CNF, Clause, Expression
+from src.dto.models import Clause, Expression, Literal
 import re
-from src.dto.models import Expression, Clause, CNF, Agent, Operator
+from src.dto.models import Literal, Expression, Clause, Agent, Operator
 
 
 
@@ -52,13 +52,14 @@ class create_CNF:
         clauses = []
         for clause in split_text:
             clauses.append(create_clause(clause).clause)
-        self.cnf = CNF(clauses=clauses)
+        self.cnf = Clause(clauses=clauses)
+
 class create_clause:
     def __init__(self, string: str):
         expressions = []
         for expression in string.split("|"):
             expressions.append(create_expression(expression).expression)
-        self.clause = Clause(expressions=expressions)
+        self.clause = Expression(expression=expressions)
 
 
 class create_expression:
@@ -68,6 +69,8 @@ class create_expression:
         if re.match("~", string):
             is_not = True
             string = string[1:]
-        self.expression = Expression(is_not=is_not, expression=string)
+        self.expression = Literal(is_not=is_not, literal=string)
+
+
 
 # parse(expression_str)

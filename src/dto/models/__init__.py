@@ -36,5 +36,5 @@ class Clause(BaseModel):
 
 
 class Agent(BaseModel):
-    beliefs: List[CNF] # def. list of expressions
+    beliefs: List[Clause]  # def. list of expressions
 

@@ -49,9 +49,9 @@ def truth_table(expr_str):
         # A = false, B = true, C = false
         # i = 011 = 3
         # A = true, B = true, C = false
-        # i=100 = 4
-        # A= false, b = false, C = true
-        # i=101 = 5
+        # i = 100 = 4
+        # A = false, b = false, C = true
+        # i = 101 = 5
         # A = true, b = false, C = true
         # i = 110 = 6
         # A = false, b = true, C = true
@@ -298,8 +298,6 @@ points (?):
  
  
  left from req 1 = 
- 
- 
 """
 
 """
