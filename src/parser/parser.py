@@ -25,6 +25,76 @@ from src.dto.models import Literal, Expression, Clause, Agent, Operator
 # Convert the string to a SymPy expression
 
 
+from typing import Dict, List
+from itertools import product
+
+class Literal:
+    """
+    Represents a literal.
+    :param
+    - `is_not`: boolean.
+    - `literal`: str.
+    """
+    def __init__(self, is_not: bool = False, literal: str = ''):
+        self.is_not = is_not
+        self.literal = literal
+
+class Expression:
+    def __init__(self, literals: List[Literal]):
+        self.literals = literals
+
+class Clause:
+    def __init__(self, expressions: List[Expression]):
+        self.expressions = expressions
+
+class Agent:
+    def __init__(self, beliefs: List[Clause]):
+        self.beliefs = beliefs
+
+def extract_variables(agent: Agent) -> List[str]:
+    variables = set()
+    for clause in agent.beliefs:
+        for expression in clause.expressions:
+            for literal in expression.literals:
+                variables.add(literal.literal)
+    return list(variables)
+
+def evaluate_expression(expression: Expression, truth_values: Dict[str, bool]) -> bool:
+    result = False
+    for literal in expression.literals:
+        value = truth_values.get(literal.literal, False)
+        if literal.is_not:
+            value = not value
+        result = result or value
+    return result
+
+def evaluate_agent(agent: Agent) -> List[bool]:
+    variables = extract_variables(agent)
+    truth_combinations = product([False, True], repeat=len(variables))
+    results = []
+    for combination in truth_combinations:
+        truth_values = dict(zip(variables, combination))
+        result = all(evaluate_expression(expression, truth_values) for clause in agent.beliefs for expression in clause.expressions)
+        results.append(result)
+    return results
+
+# Example usage:
+# Define your Agent instance
+agent = Agent([
+    Clause([
+        Expression([Literal(literal="A")]),
+        Expression([Literal(literal="B")])
+    ]),
+    Clause([
+        Expression([Literal(literal="C", is_not=True)])
+    ])
+])
+
+# Evaluate the agent
+results = evaluate_agent(agent)
+print("Results for all possible combinations of truth values:")
+print(results)
+
 
 def parse(logicaal_expression: str = None):
     expression = sympify(logicaal_expression, evaluate=False)
@@ -40,6 +110,7 @@ def parse(logicaal_expression: str = None):
     ###create_CNF(cnf_expression)
 
     return cnf_expression
+
 
 
 
