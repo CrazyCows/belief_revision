@@ -7,24 +7,32 @@ from sympy import sympify
 from sympy.logic.boolalg import to_cnf
 
 
-
 class Operator(Enum):
     NOT = "!"
     AND = "&"
     OR = "OR"
 
-# A is a an expressions but also !A
-class Expression(BaseModel):
+
+# A is a Literal but also !A
+class Literal(BaseModel):
+    """
+    Represents a literal.
+    :param
+    - `is_not`: boolean.
+    - `literal`: str.
+    """
     is_not: bool = False
-    expression: str
+    literal: str
+
+
+class Expression(BaseModel):
+    # should have the form (S1 OR S2 OR ... OR SN)
+    expression: List[Literal]
+
 
 class Clause(BaseModel):
-    # should have the form (S1 OR S2 OR ... OR SN)
-    expressions: List[Expression]
-
-class CNF(BaseModel):
     # clause with (AND) in between
-    clauses: List[Clause]
+    clauses: List[Expression]
 
 
 class Agent(BaseModel):

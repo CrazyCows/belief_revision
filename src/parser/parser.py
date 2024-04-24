@@ -21,7 +21,6 @@ from src.dto.models import Expression, Clause, CNF, Agent, Operator
 
 
 # Define the string representation of the logical expression
-expression_str = '(~a | ~c) & (~b | c) >> ~a'
 # (not(A) | not(C)) & (not(B) | C ) -> not(A)
 # Convert the string to a SymPy expression
 
@@ -38,9 +37,9 @@ def parse(logicaal_expression: str = None):
 
     # cnf-string --> CNF() object --> belief
 
-    ###
+    ###create_CNF(cnf_expression)
 
-    return create_CNF(cnf_expression)
+    return cnf_expression
 
 
 
@@ -65,9 +64,10 @@ class create_clause:
 class create_expression:
     def __init__(self, string: str):
         is_not = False
-        if re.match("!", string):
+        print(string)
+        if re.match("~", string):
             is_not = True
             string = string[1:]
         self.expression = Expression(is_not=is_not, expression=string)
 
-parse(expression_str)
+# parse(expression_str)
