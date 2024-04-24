@@ -52,7 +52,7 @@ def truth_table(expr_str):
         # i = 100 = 4
         # A = false, b = false, C = true
         # i = 101 = 5
-        # A = true, b = false, C = true
+        # A = True, b = False, C = true
         # i = 110 = 6
         # A = false, b = true, C = true
         # i = 111 = 7
