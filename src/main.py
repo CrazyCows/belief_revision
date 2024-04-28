@@ -5,31 +5,7 @@ from src.parser.parser import parse
 import re
 
 import pandas as pd
-import sympy as sp
 
-"""
-def truth_table(expr_str):
-    # Parse the expression using sympy
-    expr = sp.sympify(expr_str)
-
-    # Find all symbols in the expression
-    symbols = sorted(expr.atoms(sp.Symbol), key=lambda s: s.name)
-
-    # Generate all possible combinations of truth values
-    rows = []
-    for combo in range(2 ** len(symbols)):
-        # Create a dictionary of truth values for this combination
-        val_dict = {s: bool(combo & (1 << i)) for i, s in enumerate(symbols)}
-
-        # Evaluate the expression with these truth values
-        result = expr.subs(val_dict)
-
-        # Add the row to the list
-        rows.append({str(s): val_dict[s] for s in symbols} | {'result': bool(result)})
-
-    # Create a DataFrame from the rows
-    return rows
-"""
 def truth_table(expr_str):
     # Extract unique symbols from the expression
     symbols = sorted(set(char for char in expr_str if char.isalpha()))
@@ -59,9 +35,8 @@ def truth_table(expr_str):
         # A = true, b = true, c = true
         val_dict = {symbols[j]: bool(i & (1 << j)) for j in range(len(symbols))}
         result = eval(expr_str, {}, val_dict)
-
         rows.append({**val_dict, 'result': result})
-    print(pd.DataFrame(rows))
+    #print(pd.DataFrame(rows))
     return rows
 
 #Example usage:
@@ -113,7 +88,16 @@ if __name__ == "__main__":
         "(u | v)",
         "(~s | ~r)",
         "(~t & p)",
-        "(t)"
+        "(~p)"
+    ]
+
+    expressions3 = [
+        "(C)",
+        "(A)",
+        "(B)",
+        "(A & B)",
+        "(D)",
+        "(~A)"
     ]
 
     # print(cnf_form)
@@ -128,13 +112,25 @@ if __name__ == "__main__":
         :return: returns True if a statement can be true and false if it is a contradiction
         """
         for row in table_is:
-            if row['result'] is True or row['result'] == 1:
+            if row['result'] is True or row['result'] != 0:
                 return True
-        print("IM FALSE MAN")
+        #print("IM FALSE MAN")
         return False
 
-    def contraction(beliefs):
-        beliefs_string = " ) & ( ".join(beliefs)
+    def check_correct_input(string):
+        allowed_characters = set("ABCDEFGHIJKLMNOPQRSTUZ~&|>() ")
+        alpha_count = 0
+        for char in string:
+            if char not in allowed_characters:
+                return False
+            if char.isalpha():
+                alpha_count += 1
+        if alpha_count == 0:
+            return False
+        return True
+
+    def contraction(local_beliefs, number_of_pops):
+        beliefs_string = " ) & ( ".join(local_beliefs)
         beliefs_string = "( " + beliefs_string + " )"
 
         #print(beliefs_string)
@@ -145,15 +141,14 @@ if __name__ == "__main__":
 
 
         if check_for_truth(table_is):
-            pass
+            return local_beliefs
         else:
-            iterate_to = len(beliefs)
-            for i, belief in enumerate(reversed(beliefs), 1):
-
-
-
-                beliefs_tmp = beliefs.copy()
+            temp_belief_list = []
+            iterate_from = len(local_beliefs)-2
+            for i in range(iterate_from, -1, -1):
+                beliefs_tmp = local_beliefs.copy()
                 beliefs_tmp.pop(i)
+                temp_belief_list.append(beliefs_tmp.copy())
 
                 beliefs_temp_string = " ) & ( ".join(beliefs_tmp)
                 beliefs_temp_string = "( " + beliefs_temp_string + " )"
@@ -168,145 +163,62 @@ if __name__ == "__main__":
                 # not(A) ->
 
                 if is_true:
-                    beliefs.pop(i)
-                    print("IM TRUE MAN")
-                    break
-
-
-
-        # TODO: Implement removal of thingies
+                    local_beliefs.pop(i)
+                    #print("IM TRUE MAN")
+                    return local_beliefs
+                elif i == 0:
+                    best_belief = []
+                    k = 0
+                    if len(temp_belief_list) > 0:
+                        for temp_belief in temp_belief_list:
+                            print("depth: ")
+                            print(number_of_pops)
+                            print("beliefnr: ")
+                            print(k)
+                            k = k + 1
+                            if isinstance(temp_belief, list):
+                                temp_belief = contraction(temp_belief, number_of_pops+1)
+                            if (best_belief == [] or len(temp_belief) > len(best_belief)) and isinstance(temp_belief, list):
+                                best_belief = temp_belief.copy()
+                        return best_belief
+                    else:
+                        return []
         print(beliefs)
 
     stop_counter = 0
-    for expression in expressions2:
+    new_statement = ""
+    print("Welcome to the belief revision machine, by possibly the most okayest group in intro to AI")
+    while new_statement != "exit":
+        print("Can only consist of single letters A-Z a-z, '&', '|', '~' and '>>'.")
+        new_statement = input("Write a belief: ")
+        new_statement = new_statement.upper()
+        if check_correct_input(new_statement) and len(new_statement) > 0:
+            cnf_form = parse(new_statement)
+            cnf_form = str(cnf_form)
+            print(cnf_form)
+            beliefs.append(cnf_form)
+            print(beliefs)
 
-
-        cnf_form = parse(expression)
-        cnf_form = str(cnf_form)
-        print(cnf_form)
-        beliefs.append(cnf_form)
-
-
-
-        amount = len(re.findall("&", cnf_form)) + 1
-        if amount > 1:
-            beliefs.pop()
-            beliefs_tmp = beliefs.copy()
-            for i in range(amount):
+            amount = len(re.findall("&", cnf_form)) + 1
+            if amount > 1:
+                beliefs.pop()
+                beliefs_tmp = beliefs.copy()
                 newest_beliefs_OG = cnf_form.replace("(", "").replace(")", "")
                 # Text string is 5
                 newest_beliefs = newest_beliefs_OG.split(" & ")
-                # This is range 20?
-                beliefs_tmp.append(newest_beliefs[i])
-                contraction(beliefs_tmp)
-            beliefs.append(newest_beliefs_OG)
-            print(beliefs)
-        else:
-            contraction(beliefs)
+                for i in range(amount):
+                    beliefs_tmp.append(newest_beliefs[i])
+                    beliefs_tmp = contraction(beliefs_tmp, 0).copy()
+                for i in range(len(beliefs_tmp)-1, len(beliefs_tmp)-1-amount, -1):
+                    beliefs_tmp.pop(i)
+                beliefs = beliefs_tmp.copy()
+                beliefs.append(newest_beliefs_OG)
+                print(beliefs)
+            else:
+                beliefs = contraction(beliefs, 0).copy()
+        print(beliefs)
 
-
-
-
-
-
-
-
-    #print(table_is[len(table_is)-1])
-
-
-
-    belief_base = []
-    clause = []
-    expression = []
-    #print(cnf_form.cnf.clauses[0].expression)
-
-
-
-
-
-
-
-
-
-
-
-
-"""
-(A | B ->  C)
- = not(A | B) | C
- = not(A) & not(B) | C 
- 
- 
-
-A ^ B -> not(C)
- = not(A ^ B) | not(C)
- = not(A) | not(B) | not(C)
- 
- K1
- 
- K2
- 
- 
- 
- 1. req = (not(A) | not(C)) & not(B)
- 2. req = A & B
- 
- 
- (b | ~a) & (~a | ~c)
- (not(A) | not(C)) & (not(B) | C ) -> not(A) 
- 
- k1:
- a = 0 => c = 1|0
- a = 1 => c = 0
- 
- k2:
- b = 0 => c = 0|1
- b = 1 => c = 1
- 
- k1 & k2:
-  a = 0 => c = 1|0 && b = 0 => c = 0|1
-  a = 0 => c = 1|0 && b = 1 => c = 1
-  a = 1 => c = 0 && b = 0 => c = 0|1
-  a = 1 => c = 0 && b = 1 => c = 1
-  
-req 2: 
-  a = 0 => b = 1|0 && c = 1|0
-  a = 1 => b = 0 => c = 1|0
-  b = 0 => c = 1|0 && c = 1|0
-  
- 
- if 
- 2. req = A cannot do
- or 
- 2. req = (A & B & C) no can do!
- 
- A = 0
- B = 1 or 0
- C = not(b) if b != 1
-
-Prio:
-1. Do nothing
-2. Contraction
-3. Revision
-
-points (?):
-
-
- Generally: 
- (K1 & K2 & ...  & KN
- 
- 
- 
- left from req 1 = 
-"""
-
-"""
- 1. BELIEFSET{{a},{b}, {AND(a,b) => c},  NOT(c)}
- if we now gat the new belief of NOT(c) then we can revise the set 
- of belief in the following of two ways: 
- 
-    - we remove the a will result in {AND(a,b) => NOT(c)} and NOT(c) being true
-    - same if we remove b
-    - if we remove the entire implecation {AND(a,b) => NOT(c)}
- 
-"""
+        belief_base = []
+        clause = []
+        expression = []
+        #print(cnf_form.cnf.clauses[0].expression)
