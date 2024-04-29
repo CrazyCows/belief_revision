@@ -190,7 +190,3 @@ if __name__ == "__main__":
                 print("Contradictory statement or logical equivalent belief already exist in belief base. "
                       "Statement not added to belief base")
             print(beliefs)
-
-            belief_base = []
-            clause = []
-            expression = []
