@@ -18,6 +18,7 @@ def truth_table(expr_str):
     # Generate all possible combinations of truth values for symbols
     rows = []
     for i in range(2 ** len(symbols)):
+        # 2 ** len(symbols) is equal to 2^len(symbols)
         # Finds all combination of boolean values, see example below:
         # A = 000, B = 010, C = 100, because of (1 << j)
         # i = 000 = 0
@@ -41,6 +42,7 @@ def truth_table(expr_str):
         rows.append({**val_dict, 'result': result})
     # print(pd.DataFrame(rows))
     return rows
+
 
 def check_for_truth(table_is):
     """
@@ -66,6 +68,16 @@ def check_correct_input(string):
     if alpha_count == 0:
         return False
     return True
+
+
+def check_doubles_and_contradictory_statement(cnf, beliefs):
+    doubles = False
+    for belief in beliefs:
+        if belief == cnf:
+            doubles = True
+    if doubles is False and check_for_truth(truth_table(cnf_form)):
+        return True
+    return False
 
 
 def contraction(local_beliefs, number_of_pops, belief_map, max_steps):
@@ -153,7 +165,7 @@ if __name__ == "__main__":
             cnf_form = parse(new_statement)
             cnf_form = str(cnf_form)
             print(cnf_form)
-            if check_for_truth(truth_table(cnf_form)):
+            if check_doubles_and_contradictory_statement(cnf_form, beliefs):
                 beliefs.append(cnf_form)
                 print(beliefs)
 
@@ -175,7 +187,8 @@ if __name__ == "__main__":
                 else:
                     beliefs = contraction(beliefs, 0, {}, sys.maxsize).copy()
             else:
-                print("Contradictory statement, not added to belief base")
+                print("Contradictory statement or logical equivalent belief already exist in belief base. "
+                      "Statement not added to belief base")
             print(beliefs)
 
             belief_base = []
