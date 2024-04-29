@@ -42,7 +42,6 @@ def truth_table(expr_str):
     # print(pd.DataFrame(rows))
     return rows
 
-
 def check_for_truth(table_is):
     """
     Function that checks for if a statement is a contradiction
@@ -139,62 +138,6 @@ def contraction(local_beliefs, number_of_pops, belief_map, max_steps):
 # print(table)
 
 if __name__ == "__main__":
-    expression_str = '((~a | ~c) & (~b | c) >> ~a)'
-
-    expressions = [
-        "(~a | ~c) & (~b | c) >> ~a",
-        "(a & b) | (~c & d) >> (b | ~d)",
-        "(~a & b) | (c >> ~d)",
-        "(a >> b) & (~c | d)",
-        "(~a & ~b) | (~c & ~d)",
-        "(a | b) & (c >> ~d) >> (~a | c)",
-        "(a & ~b) >> (~c | d)",
-        "(a >> ~b) & (c | ~d)",
-        "(a | b) & c & ~d >> e",
-        "(~a & b) | (c >> d & ~e)",
-        "(a & b & c) | (~d & e)",
-        "(a | ~b) & (c | d) >> (~e & a)",
-        "(~a >> b) & (c & ~d)",
-        "(a & b) | ~(c | d | e)",
-        "(a >> ~b) & (~c >> d)",
-        "(a | b | c) & (~d >> e)",
-        "(~a & ~b) | (c & ~d & e)",
-        "(a & ~b & ~c) >> (d | ~e)",
-        "(a | b) & (~c & d & ~e)",
-        "(~a >> b) & (c | d | ~e)",
-        "(a & b) | (c & ~d) & e",
-        "(a | ~b) & (c >> d) & ~e",
-        "(a & b & c) | (~d | e)",
-        "(a >> ~b) & (~c | d | e)",
-        "(~a | b) & (c & ~d >> e)",
-        "(a & b) & (~c >> d | e)",
-        "(~a & ~b) | (c | ~d & e)",
-        "(a | b | ~c) >> (d & e)",
-        "(~a & b & c) | (d & ~e)",
-        "(a | ~b & c) & (d >> ~e)"
-    ]
-
-    expressions2 = [
-        "(p)",
-        "(q)",
-        "(~p | r)",
-        "(s)",
-        "(u | v)",
-        "(~s | ~r)",
-        "(~t & p)",
-        "(~p)"
-    ]
-
-    expressions3 = [
-        "(C)",
-        "(A)",
-        "(B)",
-        "(A & B)",
-        "(D)",
-        "(~A)"
-    ]
-
-    # print(cnf_form)
 
     beliefs = []
     beliefs_tmp = []
@@ -210,28 +153,31 @@ if __name__ == "__main__":
             cnf_form = parse(new_statement)
             cnf_form = str(cnf_form)
             print(cnf_form)
-            beliefs.append(cnf_form)
+            if check_for_truth(truth_table(cnf_form)):
+                beliefs.append(cnf_form)
+                print(beliefs)
+
+                amount = len(re.findall("&", cnf_form)) + 1
+                if amount > 1:
+                    beliefs.pop()
+                    beliefs_tmp = beliefs.copy()
+                    newest_beliefs_OG = cnf_form.replace("(", "").replace(")", "")
+                    # Text string is 5
+                    newest_beliefs = newest_beliefs_OG.split(" & ")
+                    for i in range(amount):
+                        beliefs_tmp.append(newest_beliefs[i])
+                        beliefs_tmp = contraction(beliefs_tmp, 0, {}, sys.maxsize).copy()
+                    for i in range(len(beliefs_tmp) - 1, len(beliefs_tmp) - 1 - amount, -1):
+                        beliefs_tmp.pop(i)
+                    beliefs = beliefs_tmp.copy()
+                    beliefs.append(newest_beliefs_OG)
+                    print(beliefs)
+                else:
+                    beliefs = contraction(beliefs, 0, {}, sys.maxsize).copy()
+            else:
+                print("Contradictory statement, not added to belief base")
             print(beliefs)
 
-            amount = len(re.findall("&", cnf_form)) + 1
-            if amount > 1:
-                beliefs.pop()
-                beliefs_tmp = beliefs.copy()
-                newest_beliefs_OG = cnf_form.replace("(", "").replace(")", "")
-                # Text string is 5
-                newest_beliefs = newest_beliefs_OG.split(" & ")
-                for i in range(amount):
-                    beliefs_tmp.append(newest_beliefs[i])
-                    beliefs_tmp = contraction(beliefs_tmp, 0, {}, sys.maxsize).copy()
-                for i in range(len(beliefs_tmp) - 1, len(beliefs_tmp) - 1 - amount, -1):
-                    beliefs_tmp.pop(i)
-                beliefs = beliefs_tmp.copy()
-                beliefs.append(newest_beliefs_OG)
-                print(beliefs)
-            else:
-                beliefs = contraction(beliefs, 0, {}, sys.maxsize).copy()
-        print(beliefs)
-
-        belief_base = []
-        clause = []
-        expression = []
+            belief_base = []
+            clause = []
+            expression = []
